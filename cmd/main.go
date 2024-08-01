@@ -2,14 +2,16 @@ package main
 
 import (
 	"log"
+	"net/http"
 
-	"github.com/oluwatobi1/gh-api-data-fetch/cmd/api"
+	"github.com/oluwatobi1/gh-api-data-fetch/cmd/app"
 )
 
 func main() {
-	server := api.NewAPIServer(":8080", nil)
-	if err := server.Run(); err != nil {
-		log.Fatal(err)
-	}
+	app := app.NewAPPServer(":8080")
+	app.Run()
+
+	log.Println("Starting server on :8080...")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 
 }
