@@ -1,40 +1,60 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 
-	"github.com/oluwatobi1/gh-api-data-fetch/internal/core/domain/models"
+	"github.com/gin-gonic/gin"
 	"github.com/oluwatobi1/gh-api-data-fetch/internal/core/ports"
+	"github.com/oluwatobi1/gh-api-data-fetch/internal/utils"
+	"go.uber.org/zap"
 )
 
 type AppHandler struct {
 	RepositoryRepo ports.Repository
 	CommitRepo     ports.Commit
+	GithubService  ports.GithubService
 }
 
-func NewAppHandler(repo ports.Repository, cmt ports.Commit) *AppHandler {
+func NewAppHandler(repo ports.Repository, cmt ports.Commit, gh ports.GithubService, logger *zap.Logger) *AppHandler {
 	return &AppHandler{
 		RepositoryRepo: repo,
 		CommitRepo:     cmt,
+		GithubService:  gh,
 	}
 }
 
-func (h *AppHandler) FetchRepository(w http.ResponseWriter, r *http.Request) {
-	repoName := r.URL.Query().Get("repo")
+func (h *AppHandler) FetchRepository(gc *gin.Context) {
+	repoName := gc.Query("repo")
 	if repoName == "" {
-		http.Error(w, "Missing repo param", http.StatusBadRequest)
+		utils.InfoResponse(gc, "Missing repo param", nil, http.StatusBadRequest)
 		return
 	}
 
-	rp := models.Repository{
-		Name: repoName,
+	repoMeta, err := h.GithubService.FetchRepository(repoName)
+	if err != nil {
+		utils.InfoResponse(gc, err.Error(), nil, http.StatusInternalServerError)
+		return
 	}
-	if err := h.RepositoryRepo.Create(&rp); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(rp)
 
-	// Fetch commit
+	// rp := models.Repository{
+	// 	Name: repoName,
+	// }
+	// if err := h.RepositoryRepo.Create(&rp); err != nil {
+	// 	utils.InfoResponse(gc, err.Error(), nil, http.StatusInternalServerError)
+	// 	return
+	// }
+
+	utils.InfoResponse(gc, "success", repoMeta, http.StatusOK)
+
+}
+
+func (h *AppHandler) ListRepositories(gc *gin.Context) {
+	repos, err := h.RepositoryRepo.FindAll()
+	if err != nil {
+		utils.InfoResponse(gc, err.Error(), nil, http.StatusInternalServerError)
+		return
+	}
+
+	utils.InfoResponse(gc, "success", repos, http.StatusOK)
+
 }

@@ -2,53 +2,49 @@ package app
 
 import (
 	"log"
-	"net/http"
 
-	"github.com/gorilla/mux"
-
-	"github.com/oluwatobi1/gh-api-data-fetch/internal/adapters/db/gorm"
+	"github.com/gin-gonic/gin"
+	"github.com/oluwatobi1/gh-api-data-fetch/config"
 	"github.com/oluwatobi1/gh-api-data-fetch/internal/core/domain/models"
-	"github.com/oluwatobi1/gh-api-data-fetch/internal/handlers"
+	"go.uber.org/zap"
 	"gorm.io/driver/sqlite"
 	gm "gorm.io/gorm"
 )
 
 type APPServer struct {
-	addr string
 }
 
-func NewAPPServer(addr string) *APPServer {
-	return &APPServer{
-		addr: addr,
+func NewAPPServer() *APPServer {
+	return &APPServer{}
+}
+
+var router *gin.Engine
+
+func (s *APPServer) Run() {
+
+	if err := config.LoadConfig(); err != nil {
+		log.Fatalln(err)
 	}
-}
 
-func (s *APPServer) Run() error {
-
-	db, err := gm.Open(sqlite.Open("github_monitoring.db"), &gm.Config{})
+	db, err := gm.Open(sqlite.Open(config.Env.DB_URL), &gm.Config{})
 	if err != nil {
 		log.Fatal("failed to connect database:", err)
 	}
 	db.AutoMigrate(&models.Repository{}, &models.Commit{})
 
-	repoRepo := gorm.NewRepository(db)
-	commitRepo := gorm.NewCommitRepo(db)
-	repoHandler := handlers.NewAppHandler(repoRepo, commitRepo)
+	logger := zap.Must(zap.NewDevelopment())
+	if config.Env.ENVIRONMENT == "release" {
+		// production
+		logger = zap.Must(zap.NewProduction())
+		gin.SetMode(gin.ReleaseMode)
+	}
+	zap.ReplaceGlobals(logger)
+	defer logger.Sync()
 
-	router := mux.NewRouter()
+	router = gin.Default()
+	configureRoutes(db, logger)
 
-	router.Use(LoggingMiddleware)
-	subRouter := router.PathPrefix("/api/v1").Subrouter()
-	subRouter.HandleFunc("/fetch-repo", repoHandler.FetchRepository).Methods("GET")
-
-	return http.ListenAndServe(s.addr, router)
-}
-
-func LoggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Do stuff here
-		log.Println(r.RequestURI)
-		// Call the next handler, which can be another middleware in the chain, or the final handler.
-		next.ServeHTTP(w, r)
-	})
+	if err := router.Run(":" + config.Env.PORT); err != nil {
+		logger.Sugar().Fatal(err)
+	}
 }

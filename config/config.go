@@ -8,7 +8,10 @@ import (
 )
 
 type Config struct {
-	DB_URL string `mapstructure:"DB_URL"`
+	DB_URL       string `mapstructure:"DB_URL"`
+	PORT         string `mapstructure:"PORT"`
+	ENVIRONMENT  string `mapstructure:"ENVIRONMENT"`
+	GITHUB_TOKEN string `mapstructure:"GITHUB_TOKEN"`
 }
 
 var Env *Config = &Config{}
@@ -18,7 +21,7 @@ func LoadConfig() error {
 	var (
 		err error
 	)
-	viper.AddConfigPath("./configs")
+	viper.AddConfigPath("./config")
 	viper.SetConfigName("dev.env")
 	viper.SetConfigType("env")
 

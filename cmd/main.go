@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	app := app.NewAPPServer(":8080")
+	app := app.NewAPPServer()
 	app.Run()
 
 	log.Println("Starting server on :8080...")
