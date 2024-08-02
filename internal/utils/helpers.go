@@ -65,3 +65,8 @@ func ParseLinkHeader(header string) map[string]string {
 	}
 	return links
 }
+
+type DBError struct {
+	code int
+	err  error
+}

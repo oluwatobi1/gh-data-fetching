@@ -14,6 +14,7 @@ type Config struct {
 	GITHUB_TOKEN string `mapstructure:"GITHUB_TOKEN"`
 	START_DATE   string `mapstructure:"START_DATE"`
 	END_DATE     string `mapstructure:"END_DATE"`
+	DEFAULT_REPO string `mapstructure:"DEFAULT_REPO"`
 }
 
 var Env *Config = &Config{}

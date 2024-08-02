@@ -110,8 +110,9 @@ func (gh *GitHubAPI) FetchCommits(repoName string, repoId uint, config models.Co
 		url += fmt.Sprintf("&until=%s", config.EndDate)
 	}
 	if config.Sha != "" {
-		url += fmt.Sprintf("&until=%s", config.Sha)
+		url += fmt.Sprintf("&sha=%s", config.Sha)
 	}
+	gh.logger.Sugar().Info("URL:", url)
 	count := 2
 	for {
 		req, err := http.NewRequest("GET", url, nil)
@@ -124,8 +125,6 @@ func (gh *GitHubAPI) FetchCommits(repoName string, repoId uint, config models.Co
 			return nil, err
 		}
 		defer resp.Body.Close()
-
-		gh.logger.Sugar().Info("Status Code:", resp.StatusCode)
 
 		if resp.StatusCode == http.StatusTooManyRequests {
 			if err := utils.HandleRateLimit(resp); err != nil {
@@ -157,13 +156,10 @@ func (gh *GitHubAPI) FetchCommits(repoName string, repoId uint, config models.Co
 			break
 		}
 	}
-
 	var commits []models.Commit
 	for _, cmt := range allCommits {
 		commits = append(commits, cmt.ToCommit(repoId))
 	}
-
-	gh.logger.Sugar().Info("Total Commits: ", commits)
+	gh.logger.Sugar().Info("Total Commits: ", len(commits))
 	return commits, nil
-
 }
