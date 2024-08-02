@@ -59,3 +59,9 @@ func (c *CommitResponse) ToCommit(repoId uint) Commit {
 		UpdatedAt:   now,
 	}
 }
+
+type CommitConfig struct {
+	StartDate string
+	EndDate   string
+	Sha       string
+}

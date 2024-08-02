@@ -3,9 +3,11 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/oluwatobi1/gh-api-data-fetch/config"
+	"github.com/oluwatobi1/gh-api-data-fetch/internal/core/domain/models"
 	"github.com/oluwatobi1/gh-api-data-fetch/internal/core/ports"
 	"github.com/oluwatobi1/gh-api-data-fetch/internal/utils"
 	"go.uber.org/zap"
@@ -58,24 +60,17 @@ func (h *AppHandler) ListRepositories(gc *gin.Context) {
 
 }
 func (h *AppHandler) ListCommits(gc *gin.Context) {
-	// repoId := gc.Query("repo")
-	// if repoId == "" {
-	// 	utils.InfoResponse(gc, "Missing repo id param", nil, http.StatusBadRequest)
-	// 	return
-	// }
 
 	repos, err := h.CommitRepo.FindAll()
 	if err != nil {
 		utils.InfoResponse(gc, err.Error(), nil, http.StatusInternalServerError)
 		return
 	}
-
 	utils.InfoResponse(gc, "commit success", repos, http.StatusOK)
-
 }
 
 func (h *AppHandler) UpdateCommit(gc *gin.Context) {
-	err := h.CommitHandler()
+	err := h.UpdateAllCommits()
 	if err != nil {
 		utils.InfoResponse(gc, err.Error(), nil, http.StatusInternalServerError)
 		return
@@ -83,8 +78,7 @@ func (h *AppHandler) UpdateCommit(gc *gin.Context) {
 	utils.InfoResponse(gc, "success", nil, http.StatusOK)
 }
 
-func (h *AppHandler) CommitHandler() error {
-	h.logger.Sugar().Info("CommitHandler ")
+func (h *AppHandler) UpdateAllCommits() error {
 	repos, err := h.RepositoryRepo.FindAll()
 	if err != nil {
 		return err
@@ -94,23 +88,65 @@ func (h *AppHandler) CommitHandler() error {
 	}
 	for _, repo := range repos {
 		h.logger.Sugar().Info("Fetching Repo Commit:: ", repo.FullName)
-		commits, err := h.GithubService.FetchCommits(repo.FullName, config.Env.START_DATE, config.Env.END_DATE, repo.ID)
+		cmtConfig := models.CommitConfig{
+			StartDate: config.Env.START_DATE,
+			EndDate:   config.Env.END_DATE,
+			Sha:       repo.LastCommitSHA,
+		}
+		err := h.CommitManager(repo, cmtConfig)
 		if err != nil {
 			return err
 		}
-		for _, commit := range commits {
-			if _, err := h.CommitRepo.FindByHash(commit.Hash); err != nil {
-				commit.RepoID = repo.ID
-				if err := h.CommitRepo.Create(&commit); err != nil {
-					return err
-				}
-				h.logger.Sugar().Info("saved commit ", commit.Hash)
-			} else {
-				h.logger.Sugar().Info("commit already exist ", commit.Hash)
-
-			}
-		}
-		h.logger.Sugar().Info("commit load completed")
 	}
 	return nil
+}
+
+func (h *AppHandler) CommitManager(repo *models.Repository, config models.CommitConfig) error {
+	commits, err := h.GithubService.FetchCommits(repo.FullName, repo.ID, config)
+	if err != nil {
+		return err
+	}
+	for _, commit := range commits {
+		if _, err := h.CommitRepo.FindByHash(commit.Hash); err != nil {
+			commit.RepoID = repo.ID
+			if err := h.CommitRepo.Create(&commit); err != nil {
+				return err
+			}
+			h.logger.Sugar().Info("saved commit ", commit.Hash)
+		} else {
+			h.logger.Sugar().Info("commit already exist ", commit.Hash)
+		}
+	}
+	if len(commits) > 0 {
+		if err := h.RepositoryRepo.UpdateLastCommitSHA(repo.ID, commits[len(commits)-1].Hash); err != nil {
+			h.logger.Sugar().Error("error updating commit Sha  ", err)
+		}
+	}
+	return nil
+}
+
+func (h *AppHandler) TriggerMonitorCommits(gc *gin.Context) {
+	go h.MonitorCommits()
+	utils.InfoResponse(gc, "Commit monitoring started", nil, http.StatusOK)
+
+}
+func (h *AppHandler) MonitorCommits() {
+	h.logger.Sugar().Info("MonitorCommits")
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			h.logger.Sugar().Info("Starting hourly commit update check")
+			err := h.UpdateAllCommits()
+			if err != nil {
+				h.logger.Sugar().Error("Error updating commits: ", err)
+
+			} else {
+				h.logger.Sugar().Info("Successfully updated commits")
+
+			}
+
+		}
+	}
 }

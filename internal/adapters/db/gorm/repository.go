@@ -33,3 +33,13 @@ func (r *Repository) FindByName(name string) (*models.Repository, error) {
 	}
 	return repo, nil
 }
+
+func (r *Repository) UpdateLastCommitSHA(id uint, sha string) error {
+	if err := r.db.Model(&models.Repository{}).
+		Where("id = ?", id).
+		Update("last_commit_sha", sha).Error; err != nil {
+		return err
+
+	}
+	return nil
+}

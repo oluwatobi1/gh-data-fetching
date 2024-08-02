@@ -13,9 +13,10 @@ type Repository interface {
 	Create(repo *models.Repository) error
 	FindByName(name string) (*models.Repository, error)
 	FindAll() ([]*models.Repository, error)
+	UpdateLastCommitSHA(id uint, sha string) error
 }
 
 type GithubService interface {
 	FetchRepository(repoName string) (*models.Repository, error)
-	FetchCommits(repoName, startDate, endDate string, repoID uint) ([]models.Commit, error)
+	FetchCommits(repoName string, repoID uint, config models.CommitConfig) ([]models.Commit, error)
 }

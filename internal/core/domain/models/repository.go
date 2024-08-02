@@ -16,6 +16,7 @@ type Repository struct {
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 	FetchedAt       time.Time `json:"fetched_at"`
+	LastCommitSHA   string    `json:"last_commit_sha"`
 }
 
 func NewRepository(full_name, name, description, url, language string, forksCount, starsCount, openIssuesCount, watchersCount int, createdAt, updatedAt time.Time) *Repository {

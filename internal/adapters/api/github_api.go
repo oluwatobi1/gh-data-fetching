@@ -99,15 +99,18 @@ func (gh *GitHubAPI) FetchRepository(repoName string) (*models.Repository, error
 // 	return commits, nil
 
 // }
-func (gh *GitHubAPI) FetchCommits(repoName, startDate, endDate string, repoId uint) ([]models.Commit, error) {
+func (gh *GitHubAPI) FetchCommits(repoName string, repoId uint, config models.CommitConfig) ([]models.Commit, error) {
 	var allCommits []models.CommitResponse
 	url := fmt.Sprintf("https://api.github.com/repos/%s/commits?per_page=20", repoName)
 
-	if startDate != "" {
-		url += fmt.Sprintf("&since=%s", startDate)
+	if config.StartDate != "" {
+		url += fmt.Sprintf("&since=%s", config.StartDate)
 	}
-	if endDate != "" {
-		url += fmt.Sprintf("&until=%s", endDate)
+	if config.EndDate != "" {
+		url += fmt.Sprintf("&until=%s", config.EndDate)
+	}
+	if config.Sha != "" {
+		url += fmt.Sprintf("&until=%s", config.Sha)
 	}
 	count := 2
 	for {
