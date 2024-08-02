@@ -20,5 +20,7 @@ func configureRoutes(db *gm.DB, logger *zap.Logger) {
 	v1 := router.Group("/api/v1")
 	v1.GET("/fetch-repo", repoHandler.FetchRepository)
 	v1.GET("/list-repo", repoHandler.ListRepositories)
+	v1.GET("/list-commit", repoHandler.ListCommits)
+	v1.GET("/fetch-commit", repoHandler.UpdateCommit)
 
 }

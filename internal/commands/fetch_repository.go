@@ -16,7 +16,7 @@ func NewFetchRepositoryCmd(repo ports.Repository) *FetchRepositoryCmd {
 }
 
 func (cmd *FetchRepositoryCmd) Execute(repo string) error {
-	r := models.NewRepository(repo, "description", "rl", "eng", 2, 2, 3, 4, time.Now(), time.Now())
+	r := models.NewRepository(repo, "description", "rl", "", "eng", 2, 2, 3, 4, time.Now(), time.Now())
 	return cmd.repoRepo.Create(r)
 }
 func (cmd *FetchRepositoryCmd) Fetch() ([]*models.Repository, error) {

@@ -12,6 +12,8 @@ type Config struct {
 	PORT         string `mapstructure:"PORT"`
 	ENVIRONMENT  string `mapstructure:"ENVIRONMENT"`
 	GITHUB_TOKEN string `mapstructure:"GITHUB_TOKEN"`
+	START_DATE   string `mapstructure:"START_DATE"`
+	END_DATE     string `mapstructure:"END_DATE"`
 }
 
 var Env *Config = &Config{}

@@ -4,7 +4,8 @@ import "time"
 
 type Repository struct {
 	ID              uint      `gorm:"primaryKey" json:"id"`
-	Name            string    `gorm:"unique;not null" json:"name"`
+	FullName        string    `gorm:"unique;not null" json:"full_name"`
+	Name            string    `json:"name"`
 	Description     string    `gorm:"type:text"  json:"description"`
 	URL             string    `gorm:"type:text"`
 	Language        string    `json:"language"`
@@ -17,8 +18,9 @@ type Repository struct {
 	FetchedAt       time.Time `json:"fetched_at"`
 }
 
-func NewRepository(name, description, url, language string, forksCount, starsCount, openIssuesCount, watchersCount int, createdAt, updatedAt time.Time) *Repository {
+func NewRepository(full_name, name, description, url, language string, forksCount, starsCount, openIssuesCount, watchersCount int, createdAt, updatedAt time.Time) *Repository {
 	return &Repository{
+		FullName:        full_name,
 		Name:            name,
 		Description:     description,
 		URL:             url,

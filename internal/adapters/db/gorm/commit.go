@@ -12,7 +12,6 @@ type CommitRepo struct {
 
 func NewCommitRepo(db *gorm.DB) ports.Commit {
 	return &CommitRepo{db: db}
-
 }
 
 func (c *CommitRepo) Create(commit *models.Commit) error {
@@ -25,7 +24,6 @@ func (c *CommitRepo) FindByHash(hash string) (*models.Commit, error) {
 		return nil, err
 	}
 	return &cmt, nil
-
 }
 
 func (c *CommitRepo) FindByRepoId(repoId uint) ([]*models.Commit, error) {
@@ -34,5 +32,12 @@ func (c *CommitRepo) FindByRepoId(repoId uint) ([]*models.Commit, error) {
 		return nil, err
 	}
 	return cmt, nil
+}
 
+func (r *CommitRepo) FindAll() ([]*models.Commit, error) {
+	var cmt []*models.Commit
+	if err := r.db.Find(&cmt).Error; err != nil {
+		return nil, err
+	}
+	return cmt, nil
 }
