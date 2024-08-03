@@ -5,6 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/oluwatobi1/gh-api-data-fetch/config"
+	"github.com/oluwatobi1/gh-api-data-fetch/internal/adapters/api"
+	"github.com/oluwatobi1/gh-api-data-fetch/internal/adapters/db/gorm"
+	"github.com/oluwatobi1/gh-api-data-fetch/internal/application/handlers"
 	"github.com/oluwatobi1/gh-api-data-fetch/internal/core/domain/models"
 	"go.uber.org/zap"
 	"gorm.io/driver/sqlite"
@@ -21,7 +24,6 @@ func NewAPPServer() *APPServer {
 var router *gin.Engine
 
 func (s *APPServer) Run() {
-
 	if err := config.LoadConfig(); err != nil {
 		log.Fatalln(err)
 	}
@@ -40,11 +42,34 @@ func (s *APPServer) Run() {
 	}
 	zap.ReplaceGlobals(logger)
 	defer logger.Sync()
-
 	router = gin.Default()
-	configureRoutes(db, logger)
-
+	initializeApp(db, logger)
 	if err := router.Run(":" + config.Env.PORT); err != nil {
 		logger.Sugar().Fatal(err)
 	}
+}
+
+func initializeApp(db *gm.DB, logger *zap.Logger) {
+	logger.Info("Configure routes")
+	repoRepo := gorm.NewRepository(db)
+	commitRepo := gorm.NewCommitRepo(db)
+	ghApi := api.NewGitHubAPI(config.Env.GITHUB_TOKEN, logger)
+	appHandler := handlers.NewAppHandler(repoRepo, commitRepo, ghApi, logger)
+	appHandler.SetupEventBus()
+	setupApp(appHandler, logger)
+	configureRoutes(appHandler)
+}
+
+func setupApp(app *handlers.AppHandler, logger *zap.Logger) {
+	logger.Sugar().Info("Configure App")
+	if config.Env.DEFAULT_REPO != "" {
+		if _, err := app.InitNewRepository(config.Env.DEFAULT_REPO); err != nil {
+			logger.Sugar().Warn("Error fetching repositories::: ", err.Error())
+		} else {
+			logger.Sugar().Info("Repository fetched successfully")
+		}
+	} else {
+		logger.Sugar().Warn("DEFAULT_REPO Not Specified")
+	}
+
 }

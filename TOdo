@@ -1,0 +1,4 @@
+1. fix application start.
+2. endpoint for top n & top commit with pagination
+3. check for err and capture for stop
+4. single responsibility
