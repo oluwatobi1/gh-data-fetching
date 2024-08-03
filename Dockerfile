@@ -35,5 +35,5 @@ WORKDIR /app
 
 EXPOSE 8080
 # Run the web service on container startup.
-CMD ["./server", "default-repo"]
+CMD ["./server"]
 

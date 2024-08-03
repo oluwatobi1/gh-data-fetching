@@ -50,7 +50,7 @@ func (s *APPServer) Run() {
 }
 
 func initializeApp(db *gm.DB, logger *zap.Logger) {
-	logger.Info("Configure routes")
+	logger.Info("initializeApp")
 	repoRepo := gorm.NewRepository(db)
 	commitRepo := gorm.NewCommitRepo(db)
 	ghApi := api.NewGitHubAPI(config.Env.GITHUB_TOKEN, logger)
@@ -61,7 +61,7 @@ func initializeApp(db *gm.DB, logger *zap.Logger) {
 }
 
 func setupApp(app *handlers.AppHandler, logger *zap.Logger) {
-	logger.Sugar().Info("Configure App")
+	logger.Sugar().Info("setupApp")
 	if config.Env.DEFAULT_REPO != "" {
 		if _, err := app.InitNewRepository(config.Env.DEFAULT_REPO); err != nil {
 			logger.Sugar().Warn("Error fetching repositories::: ", err.Error())

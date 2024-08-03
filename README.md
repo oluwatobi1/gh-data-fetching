@@ -74,6 +74,40 @@ Steps:
     "data": null
 }`
 
+#### 1. Get Top N Commit Authors
+**Endpoint: GET /api/v1/top-commit-authors**
+Description: Retrieves the top N commit authors by commit count from the database.
+
+Query Parameters:
+- page (optional, default: 1): The page number for pagination.
+- page_size (optional, default: 10): The number of commits (N).
+Response:
+
+200 OK: Returns a list of top commit authors with their commit counts.
+400 Bad Request: Invalid request parameters.
+500 Internal Server Error: Error fetching top commit authors.
+Example Request:
+`http://localhost:8000/api/v1/top-commit-authors?page=1&page_size=30`
+
+
+#### 2.  Retrieve Commits by Repository Name
+**Endpoint: GET /api/v1/commits?repo_name**
+Description: Retrieves commits of a repository by its name from the database.
+
+Query Parameters:
+- repo_name(required):The full_name of the repository.
+- page (optional, default: 1): The page number for pagination.
+- page_size (optional, default: 10): The number of commits (N).
+Response:
+
+200 OK: Returns a list of commits for the specified repository.
+400 Bad Request: Missing repository name or invalid pagination parameters.
+500 Internal Server Error: Error fetching commits for the repository.
+
+Example Request:
+`http://localhost:8000/api/v1/commits?repo_name=chromium/chromium&page=1&page_size=12`
+
+
 
 #### Key Components
 ##### API Layer

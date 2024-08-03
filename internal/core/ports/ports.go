@@ -1,15 +1,19 @@
 package ports
 
-import "github.com/oluwatobi1/gh-api-data-fetch/internal/core/domain/models"
+import (
+	"github.com/oluwatobi1/gh-api-data-fetch/internal/core/domain/models"
+	"github.com/oluwatobi1/gh-api-data-fetch/internal/core/domain/types"
+)
 
 type Commit interface {
 	Create(commit *models.Commit) error
 	FindByHash(hash string) (*models.Commit, error)
-	FindByRepoId(repoId uint) ([]*models.Commit, error)
+	FindByRepoId(repoId uint, page int, pageSize int) ([]*models.Commit, error)
 	FindAll() ([]*models.Commit, error)
 	CreateMany(commits []models.Commit) error
 	FindAny(hashes []string) ([]*models.Commit, error)
 	Count() (int64, error)
+	GetTopCommitAuthors(page int, pageSize int) ([]types.AuthorCommitsCount, error)
 }
 
 type Repository interface {

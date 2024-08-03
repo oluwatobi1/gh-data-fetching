@@ -127,9 +127,7 @@ func (h *AppHandler) CommitManager(repo *models.Repository, config models.Commit
 		if count, err := h.CommitRepo.Count(); err == nil {
 			h.logger.Sugar().Info("Total Commit in Database  ", count)
 		}
-
 	}
-
 	return nil
 }
 

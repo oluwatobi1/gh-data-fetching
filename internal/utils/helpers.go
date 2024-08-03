@@ -2,12 +2,14 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/oluwatobi1/gh-api-data-fetch/internal/core/domain/types"
 )
 
 type ResponseType struct {
@@ -66,7 +68,28 @@ func ParseLinkHeader(header string) map[string]string {
 	return links
 }
 
-type DBError struct {
-	code int
-	err  error
+func ParsePaginationParams(pageStr, pageSizeStr string) (*types.Pagination, error) {
+
+	if pageStr == "" {
+		pageStr = "1"
+	}
+
+	if pageSizeStr == "" {
+		pageSizeStr = "10"
+	}
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		return nil, fmt.Errorf("invalid page value %s", err.Error())
+	}
+
+	pageSize, err := strconv.Atoi(pageSizeStr)
+	if err != nil || pageSize < 1 {
+		return nil, fmt.Errorf("invalid page_size value %s", err.Error())
+	}
+
+	return &types.Pagination{
+		Page:     page,
+		PageSize: pageSize,
+	}, err
+
 }
