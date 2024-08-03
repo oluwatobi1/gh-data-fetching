@@ -22,15 +22,22 @@ go mod tidy
 3. Setup environment variables (create a ./config/dev.env file based on ./configs/sample_env):
 
 ```
-PORT=8000
-ENVIRONMENT=debug
-DB_URL=github_monitoring.db
-DEFAULT_REPO=chromium/chromium
-START_DATE=2024-08-02
-END_DATE=2024-07-02
-GITHUB_TOKEN=
+GITHUB_TOKEN= value (this is required)
+PORT=8000 (required)
+ENVIRONMENT=debug (required)
+DB_URL=github_monitoring.db (required)
+DEFAULT_REPO=chromium/chromium (optional)
+START_DATE=2024-08-02(optional)
+END_DATE=2024-07-02 (optional)
 ```
 
+`GITHUB_TOKEN` is  github pat_token. it is used to authenticate requests to github. Sample, token format `github_pat_51A5IY4T3Y0Bksajq..............`.
+To get your Personal Access Token (PAT) see: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+
+`DB_URL` is sqlite db name
+`DEFAULT_REPO`: default github repository to be fetch and monitored when application starts. Sample `chromium/chromium`
+`START_DATE`: commit fetch start date if empty it fetches all commits from repo start
+`END_DATE`: commit fetch end date if empty it fetches all commits until current day
 ##### Running the Application
 1. Start the application using Docker Compose:
 ```
@@ -42,6 +49,28 @@ docker compose -f docker-compose.yaml up
 go run cmd/main.go fetch-repo
 ```
 NB: Running the application gets the  `DEFAULT_REPO` from env if it is set fetches the repo meta if it does not exist, then pull  commit based on  `START_DATE` and `END_DATE` range and begin monitoring **all** fetched repo hourly
+
+#### Fetching Commits
+There are 2 ways to initialize the process of monitoring commits
+1. Via CLI
+Steps:
+    - Set the `DEFAULT_REPO` env to `{owner}/{repo}` eg `DEFAULT_REPO= chromium/chromium`
+    - Configure other ENV values such as port, db_Url,start_date, end_date etc
+    - Run the docker container or docker compose command
+    - (Optionally: For bare metal run) Run the built app with an os Arg of `default-repo` eg `main default-repo`
+
+2. Via HTTP: New repo's can be added existing monitored repos through this route
+Steps:
+    - Start the application [via docker-compose(recommended), docker, or manually(bare-metal)]
+    - Send a Get request to `http://localhost:{ENV.PORT}/api/v1/fetch-repo?repo={owner}/{repo}`
+    An example `http://localhost:8000/api/v1/fetch-repo?repo=chromium/chromium`
+    - A success response indicate the new repo has been added. Commits would be fetch and monitored on the background.
+    Sample success response `{
+    "code": 0,
+    "message": "success",
+    "data": null
+}`
+
 
 #### Key Components
 ##### API Layer

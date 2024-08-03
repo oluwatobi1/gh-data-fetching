@@ -71,9 +71,7 @@ func (gh *GitHubAPI) FetchCommits(repoName string, repoId uint, config models.Co
 	if config.Sha != "" {
 		url += fmt.Sprintf("&sha=%s", config.Sha)
 	}
-	gh.logger.Sugar().Info("URL:", url)
 	gh.logger.Sugar().Info("Fetching Commit in Batches...")
-	gh.logger.Sugar().Info("config:", config)
 	for len(allCommits) < 1000 {
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
