@@ -7,6 +7,9 @@ type Commit interface {
 	FindByHash(hash string) (*models.Commit, error)
 	FindByRepoId(repoId uint) ([]*models.Commit, error)
 	FindAll() ([]*models.Commit, error)
+	CreateMany(commits []models.Commit) error
+	FindAny(hashes []string) ([]*models.Commit, error)
+	Count() (int64, error)
 }
 
 type Repository interface {
@@ -18,5 +21,5 @@ type Repository interface {
 
 type GithubService interface {
 	FetchRepository(repoName string) (*models.Repository, error)
-	FetchCommits(repoName string, repoID uint, config models.CommitConfig) ([]models.Commit, error)
+	FetchCommits(repoName string, repoID uint, config models.CommitConfig) ([]models.Commit, string, error)
 }

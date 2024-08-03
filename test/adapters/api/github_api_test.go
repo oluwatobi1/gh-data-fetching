@@ -39,7 +39,7 @@ func TestFetchCommits(t *testing.T) {
 		StartDate: "2023-01-01T00:00:00Z",
 		EndDate:   "2023-12-31T23:59:59Z",
 	}
-	commits, err := githubApi.FetchCommits("test/repo", 1, config)
+	commits, _, err := githubApi.FetchCommits("test/repo", 1, config)
 	assert.NoError(t, err)
 	assert.NotNil(t, commits)
 	assert.Equal(t, "abc", commits[0].Hash)

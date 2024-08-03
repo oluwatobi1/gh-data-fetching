@@ -28,7 +28,7 @@ func (r *Repository) FindAll() ([]*models.Repository, error) {
 
 func (r *Repository) FindByName(name string) (*models.Repository, error) {
 	var repo *models.Repository
-	if err := r.db.Where("name = ?", name).First(&repo).Error; err != nil {
+	if err := r.db.Where("full_name = ?", name).First(&repo).Error; err != nil {
 		return nil, err
 	}
 	return repo, nil

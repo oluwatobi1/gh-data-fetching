@@ -25,7 +25,7 @@ go mod tidy
 PORT=8000
 ENVIRONMENT=debug
 DB_URL=github_monitoring.db
-DEFAULT_REPO=oluwatobi1/web-dev-BE
+DEFAULT_REPO=chromium/chromium
 START_DATE=2024-08-02
 END_DATE=2024-07-02
 GITHUB_TOKEN=
@@ -41,7 +41,7 @@ docker compose -f docker-compose.yaml up
 ```
 go run cmd/main.go fetch-repo
 ```
-
+NB: Running the application gets the  `DEFAULT_REPO` from env if it is set fetches the repo meta if it does not exist, then pull  commit based on  `START_DATE` and `END_DATE` range and begin monitoring **all** fetched repo hourly
 
 #### Key Components
 ##### API Layer

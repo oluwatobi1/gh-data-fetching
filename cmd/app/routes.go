@@ -26,8 +26,8 @@ func configureRoutes(db *gm.DB, logger *zap.Logger) {
 	v1.GET("/fetch-repo", appHandler.FetchRepository)
 	v1.GET("/list-repo", appHandler.ListRepositories)
 	v1.GET("/list-commit", appHandler.ListCommits)
-	v1.GET("/fetch-commit", appHandler.UpdateCommit)
-	v1.GET("/monitor-commit", appHandler.TriggerMonitorCommits)
+	// v1.GET("/fetch-commit", appHandler.UpdateCommit)
+	// v1.GET("/monitor-commit", appHandler.TriggerMonitorCommits)
 
 }
 

@@ -64,13 +64,18 @@ func (h *AppHandler) InitNewRepository(repoName string) (bool, error) {
 		return false, err
 	}
 
-	if err := h.RepositoryRepo.Create(repoMeta); err != nil {
-		// todo: add specific check for already exist error
-		h.logger.Sugar().Info("err:", err.Error())
-	}
 	cmtConfig := models.CommitConfig{
 		StartDate: config.Env.START_DATE,
 		EndDate:   config.Env.END_DATE,
+	}
+	if repo, err := h.RepositoryRepo.FindByName(repoName); err == nil {
+		cmtConfig.Sha = repo.LastCommitSHA
+	} else {
+		if err := h.RepositoryRepo.Create(repoMeta); err != nil {
+			// todo: add specific check for already exist error
+			h.logger.Sugar().Info("err:", err.Error())
+			return false, fmt.Errorf("false initializing repo: %s", err)
+		}
 	}
 	h.EventBus.Emit(events.AddCommitEvent{Repo: repoMeta, Config: cmtConfig})
 	h.logger.Sugar().Info("::::: AddCommitEvent Emitted for repo:: ", repoMeta.FullName)
@@ -98,26 +103,33 @@ func (h *AppHandler) UpdateAllCommits() error {
 }
 
 func (h *AppHandler) CommitManager(repo *models.Repository, config models.CommitConfig) error {
-	commits, err := h.GithubService.FetchCommits(repo.FullName, repo.ID, config)
-	if err != nil {
-		return err
-	}
-	for _, commit := range commits {
-		if _, err := h.CommitRepo.FindByHash(commit.Hash); err != nil {
-			commit.RepoID = repo.ID
-			if err := h.CommitRepo.Create(&commit); err != nil {
-				return err
-			}
-			h.logger.Sugar().Info("saved commit ", commit.Hash)
-		} else {
-			h.logger.Sugar().Info("commit already exist ", commit.Hash)
+	for {
+		commits, lastCommitSHA, err := h.GithubService.FetchCommits(repo.FullName, repo.ID, config)
+		if err != nil {
+			return err
 		}
-	}
-	if len(commits) > 0 {
-		if err := h.RepositoryRepo.UpdateLastCommitSHA(repo.ID, commits[len(commits)-1].Hash); err != nil {
-			h.logger.Sugar().Error("error updating commit Sha  ", err)
+		if len(commits) == 0 {
+			break
 		}
+
+		if err := h.insertCommitBatch(commits); err != nil {
+			return err
+		}
+
+		if lastCommitSHA == "" {
+			break
+		}
+		if err := h.RepositoryRepo.UpdateLastCommitSHA(repo.ID, lastCommitSHA); err != nil {
+			return err
+		}
+
+		config.Sha = lastCommitSHA
+		if count, err := h.CommitRepo.Count(); err == nil {
+			h.logger.Sugar().Info("Total Commit in Database  ", count)
+		}
+
 	}
+
 	return nil
 }
 
@@ -128,7 +140,7 @@ func (h *AppHandler) TriggerMonitorCommits(gc *gin.Context) {
 
 func (h *AppHandler) MonitorCommits() {
 	h.logger.Sugar().Info("MonitorCommits")
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(1 * time.Hour)
 	defer ticker.Stop()
 	for {
 		select {
@@ -165,4 +177,40 @@ func (h *AppHandler) HandleStartMonitoringEvent(event events.StartMonitorEvent) 
 	h.logger.Sugar().Info("Received StartMonitorEvent Emitted for repo:: ")
 	go h.MonitorCommits()
 	h.logger.Sugar().Info("Started Monitoring all repos")
+}
+
+func (h *AppHandler) insertCommitBatch(batch []models.Commit) error {
+	var hashes []string
+	for _, commit := range batch {
+		hashes = append(hashes, commit.Hash)
+	}
+
+	// Find existing commits by hash
+	existingCommits, err := h.CommitRepo.FindAny(hashes)
+	if err != nil {
+		return err
+	}
+	// Create a map of existing commit hashes for quick lookup
+	existingHashMap := make(map[string]struct{}, len(existingCommits))
+	for _, commit := range existingCommits {
+		existingHashMap[commit.Hash] = struct{}{}
+	}
+
+	// Filter out commits that already exist in the database
+	var newCommits []models.Commit
+	for _, commit := range batch {
+		if _, exists := existingHashMap[commit.Hash]; !exists {
+			newCommits = append(newCommits, commit)
+		}
+	}
+
+	// Insert only new commits
+	if len(newCommits) > 0 {
+		if err := h.CommitRepo.CreateMany(newCommits); err != nil {
+			h.logger.Sugar().Info("Create Error", err)
+			return err
+		}
+	}
+
+	return nil
 }

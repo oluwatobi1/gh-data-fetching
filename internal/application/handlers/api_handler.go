@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/oluwatobi1/gh-api-data-fetch/internal/events"
 	"github.com/oluwatobi1/gh-api-data-fetch/internal/utils"
 )
 
@@ -15,21 +14,15 @@ func (h *AppHandler) FetchRepository(gc *gin.Context) {
 		return
 	}
 
-	repoMeta, err := h.GithubService.FetchRepository(repoName)
+	_, err := h.InitNewRepository(repoName)
 	if err != nil {
 		utils.InfoResponse(gc, err.
 			Error(), nil, http.StatusInternalServerError)
 		return
 	}
 
-	if err := h.RepositoryRepo.Create(repoMeta); err != nil {
-		utils.InfoResponse(gc, err.Error(), nil, http.StatusInternalServerError)
-		return
-	}
-	h.EventBus.Emit(events.AddCommitEvent{Repo: repoMeta})
-
-	h.logger.Sugar().Info("::::: AddCommitEvent Emitted for repo:: ", repoMeta.FullName)
-	utils.InfoResponse(gc, "success", repoMeta, http.StatusOK)
+	h.logger.Sugar().Info("::::: AddCommitEvent Emitted for repo:: ", repoName)
+	utils.InfoResponse(gc, "success", nil, http.StatusOK)
 }
 
 func (h *AppHandler) ListRepositories(gc *gin.Context) {
