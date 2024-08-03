@@ -35,8 +35,11 @@ END_DATE=2024-07-02 (optional)
 To get your Personal Access Token (PAT) see: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
 
 `DB_URL` is sqlite db name
+
 `DEFAULT_REPO`: default github repository to be fetch and monitored when application starts. Sample `chromium/chromium`
+
 `START_DATE`: commit fetch start date if empty it fetches all commits from repo start
+
 `END_DATE`: commit fetch end date if empty it fetches all commits until current day
 ##### Running the Application
 1. Start the application using Docker Compose:
