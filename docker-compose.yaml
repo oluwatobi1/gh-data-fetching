@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    container_name: gh-api-data-fetch
+    ports:
+      - "8080:8080"
+    command: ./server default-repo
+    restart: always
+    volumes:  
+      - .:/gh-api/
+
+    env_file:
+            - ./config/dev.env

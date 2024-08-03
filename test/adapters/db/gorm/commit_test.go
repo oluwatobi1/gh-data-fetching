@@ -11,7 +11,7 @@ import (
 )
 
 func setupTestDB() *gm.DB {
-	db, _ := gm.Open(sqlite.Open("memory"), &gm.Config{})
+	db, _ := gm.Open(sqlite.Open("memory.db"), &gm.Config{})
 	db.AutoMigrate(&models.Commit{})
 	return db
 }
