@@ -68,7 +68,11 @@ func (h *AppHandler) InitNewRepository(repoName string) (bool, error) {
 		// todo: add specific check for already exist error
 		h.logger.Sugar().Info("err:", err.Error())
 	}
-	h.EventBus.Emit(events.AddCommitEvent{Repo: repoMeta})
+	cmtConfig := models.CommitConfig{
+		StartDate: config.Env.START_DATE,
+		EndDate:   config.Env.END_DATE,
+	}
+	h.EventBus.Emit(events.AddCommitEvent{Repo: repoMeta, Config: cmtConfig})
 	h.logger.Sugar().Info("::::: AddCommitEvent Emitted for repo:: ", repoMeta.FullName)
 	return true, nil
 }

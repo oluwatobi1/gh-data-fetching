@@ -102,6 +102,7 @@ func (gh *GitHubAPI) FetchRepository(repoName string) (*models.Repository, error
 func (gh *GitHubAPI) FetchCommits(repoName string, repoId uint, config models.CommitConfig) ([]models.Commit, error) {
 	var allCommits []models.CommitResponse
 	url := fmt.Sprintf("https://api.github.com/repos/%s/commits?per_page=20", repoName)
+	gh.logger.Sugar().Info("config:", config)
 
 	if config.StartDate != "" {
 		url += fmt.Sprintf("&since=%s", config.StartDate)

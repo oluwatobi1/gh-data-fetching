@@ -32,10 +32,13 @@ func configureRoutes(db *gm.DB, logger *zap.Logger) {
 }
 
 func configureApp(app *handlers.AppHandler, logger *zap.Logger) {
-	if len(os.Args) > 1 && os.Args[1] == "fetch-repos" {
-		if config.Env.DEFAULT_REPO == "" {
+	logger.Sugar().Info("Configure App")
+	logger.Sugar().Info("os.Args", os.Args, config.Env.DEFAULT_REPO)
+
+	if len(os.Args) > 1 && os.Args[1] == "default-repo" {
+		if config.Env.DEFAULT_REPO != "" {
 			if _, err := app.InitNewRepository(config.Env.DEFAULT_REPO); err != nil {
-				logger.Sugar().Error("Error fetching repositories: ", err)
+				logger.Sugar().Warn("Error fetching repositories::: ", err.Error())
 			} else {
 				logger.Sugar().Info("Repository fetched successfully")
 			}
