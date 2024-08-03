@@ -60,6 +60,7 @@ func (gh *GitHubAPI) FetchRepository(repoName string) (*models.Repository, error
 
 func (gh *GitHubAPI) FetchCommits(repoName string, repoId uint, config models.CommitConfig) ([]models.Commit, string, error) {
 	var allCommits []models.CommitResponse
+	var errL error
 	url := fmt.Sprintf("https://api.github.com/repos/%s/commits?per_page=100", repoName)
 
 	if config.StartDate != "" {
@@ -73,20 +74,24 @@ func (gh *GitHubAPI) FetchCommits(repoName string, repoId uint, config models.Co
 	}
 	gh.logger.Sugar().Info("Fetching Commit in Batches...")
 	for len(allCommits) < 1000 {
+		var commits []models.CommitResponse
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
-			return nil, "", err
+			errL = err
+			break
 		}
 		req.Header.Set("Authorization", "Bearer "+gh.token)
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			return nil, "", err
+			errL = err
+			break
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode == http.StatusTooManyRequests {
 			if err := utils.HandleRateLimit(resp); err != nil {
-				return nil, "", err
+				errL = err
+				break
 			}
 			continue
 		}
@@ -95,9 +100,9 @@ func (gh *GitHubAPI) FetchCommits(repoName string, repoId uint, config models.Co
 			bodyBytes, _ := ioutil.ReadAll(resp.Body)
 			return nil, "", fmt.Errorf("failed to fetch commits: %s", string(bodyBytes))
 		}
-		var commits []models.CommitResponse
 		if err := json.NewDecoder(resp.Body).Decode(&commits); err != nil {
-			return nil, "", err
+			errL = err
+			break
 		}
 		if config.Sha != "" {
 			// remove already fetch hash from hash
@@ -131,5 +136,5 @@ func (gh *GitHubAPI) FetchCommits(repoName string, repoId uint, config models.Co
 		lastCommitSHA = allCommits[len(allCommits)-1].SHA
 	}
 
-	return commits, lastCommitSHA, nil
+	return commits, lastCommitSHA, errL
 }
