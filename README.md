@@ -76,11 +76,15 @@ Description: Retrieves the top N commit authors by commit count from the databas
 Query Parameters:
 - page (optional, default: 1): The page number for pagination.
 - page_size (optional, default: 10): The number of commits (N).
+
 Response:
 
 200 OK: Returns a list of top commit authors with their commit counts.
+
 400 Bad Request: Invalid request parameters.
+
 500 Internal Server Error: Error fetching top commit authors.
+
 Example Request:
 `http://localhost:8000/api/v1/top-commit-authors?page=1&page_size=30`
 
@@ -94,10 +98,13 @@ Query Parameters:
 - repo_name(required):The full_name of the repository.
 - page (optional, default: 1): The page number for pagination.
 - page_size (optional, default: 10): The number of commits (N).
+
 Response:
 
 200 OK: Returns a list of commits for the specified repository.
+
 400 Bad Request: Missing repository name or invalid pagination parameters.
+
 500 Internal Server Error: Error fetching commits for the repository.
 
 Example Request:
