@@ -70,6 +70,7 @@ Steps:
 
 #### 1. Get Top N Commit Authors
 **Endpoint: GET /api/v1/top-commit-authors**
+
 Description: Retrieves the top N commit authors by commit count from the database.
 
 Query Parameters:
@@ -86,6 +87,7 @@ Example Request:
 
 #### 2.  Retrieve Commits by Repository Name
 **Endpoint: GET /api/v1/commits?repo_name**
+
 Description: Retrieves commits of a repository by its name from the database.
 
 Query Parameters:
