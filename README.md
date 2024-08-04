@@ -49,7 +49,7 @@ docker compose -f docker-compose.yaml up
 ```
 2. Alternatively, you can run the application directly:
 ```
-go run cmd/main.go fetch-repo
+go run cmd/main.go
 ```
 NB: Running the application gets the  `DEFAULT_REPO` from env if it is set fetches the repo meta if it does not exist, then pull  commit based on  `START_DATE` and `END_DATE` range and begin monitoring **all** fetched repo hourly
 
