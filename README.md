@@ -53,16 +53,10 @@ go run cmd/main.go
 ```
 NB: Running the application gets the  `DEFAULT_REPO` from env if it is set fetches the repo meta if it does not exist, then pull  commit based on  `START_DATE` and `END_DATE` range and begin monitoring **all** fetched repo hourly
 
-#### Fetching Commits
-There are 2 ways to initialize the process of monitoring commits
-1. Via CLI
-Steps:
-    - Set the `DEFAULT_REPO` env to `{owner}/{repo}` eg `DEFAULT_REPO= chromium/chromium`
-    - Configure other ENV values such as port, db_Url,start_date, end_date etc
-    - Run the docker container or docker compose command
-    - (Optionally: For bare metal run) Run the built app with an os Arg of `default-repo` eg `main default-repo`
+#### Adding Repo and Fetching Commits
+Starting the application automatically adds(if not added ) and begins tracking the `DEFAULT_REPO`
 
-2. Via HTTP: New repo's can be added existing monitored repos through this route
+1. Via HTTP: New repo's can be added existing monitored repos through this route
 Steps:
     - Start the application [via docker-compose(recommended), docker, or manually(bare-metal)]
     - Send a Get request to `http://localhost:{ENV.PORT}/api/v1/fetch-repo?repo={owner}/{repo}`
