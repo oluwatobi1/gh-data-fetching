@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/oluwatobi1/gh-api-data-fetch/internal/core/domain/models"
+	"github.com/oluwatobi1/gh-api-data-fetch/internal/core/domain/types"
 	"github.com/oluwatobi1/gh-api-data-fetch/internal/core/ports"
 	"github.com/oluwatobi1/gh-api-data-fetch/internal/utils"
 	"go.uber.org/zap"
@@ -32,12 +33,7 @@ func (gh *GitHubAPI) FetchRepository(repoName string) (*models.Repository, error
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		var apiError struct {
-			Message          string `json:"message"`
-			DocumentationURL string `json:"documentation_url"`
-			Status           string `json:"status"`
-		}
-
+		var apiError types.ApiError
 		if err := json.NewDecoder(resp.Body).Decode(&apiError); err != nil {
 			return nil, fmt.Errorf("failed to decode error response: %w", err)
 		}

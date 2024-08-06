@@ -79,7 +79,7 @@ func (h *AppHandler) InitNewRepository(repoName string) (bool, error) {
 	} else {
 		if err := h.RepositoryRepo.Create(repoMeta); err != nil {
 			// todo: add specific check for already exist error
-			h.logger.Sugar().Info("err:", err.Error())
+			h.logger.Sugar().Error("err:", err.Error())
 			return false, fmt.Errorf("false initializing repo: %s", err)
 		}
 	}

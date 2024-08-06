@@ -35,3 +35,9 @@ type PaginationResponse struct {
 	PageSize string `json:"page_size"`
 	HasNext  bool   `json:"has_next"`
 }
+
+type ApiError struct {
+	Message          string `json:"message"`
+	DocumentationURL string `json:"documentation_url"`
+	Status           string `json:"status"`
+}
