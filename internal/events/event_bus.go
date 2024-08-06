@@ -1,29 +1,51 @@
 package events
 
-import "reflect"
+import (
+	"sync"
+)
+
+type EventHandler func(Event)
 
 type EventBus struct {
-	handler map[reflect.Type][]interface{}
+	handler map[string][]EventHandler
+	lock    sync.RWMutex
 }
 
 func NewEventBus() *EventBus {
 	return &EventBus{
-		handler: make(map[reflect.Type][]interface{}),
+		handler: make(map[string][]EventHandler),
 	}
 }
 
-func (bus *EventBus) Emit(event interface{}) {
-	eventType := reflect.TypeOf(event)
-	if handlers, found := bus.handler[eventType]; found {
+func (bus *EventBus) Emit(event Event) {
+	bus.lock.RLock()
+	defer bus.lock.RUnlock()
+
+	eventType := getType(event)
+	if handlers, ok := bus.handler[eventType]; ok {
 		for _, handler := range handlers {
-			go func(handler interface{}) {
-				handlerValue := reflect.ValueOf(handler)
-				handlerValue.Call([]reflect.Value{reflect.ValueOf(event)})
-			}(handler)
+			handler(event)
 		}
 	}
 }
 
-func (bus *EventBus) Register(eventType reflect.Type, handler interface{}) {
+func (bus *EventBus) Register(eventType string, handler EventHandler) {
+	bus.lock.Lock()
+	defer bus.lock.Unlock()
+
+	if _, ok := bus.handler[eventType]; !ok {
+		bus.handler[eventType] = []EventHandler{}
+	}
 	bus.handler[eventType] = append(bus.handler[eventType], handler)
+}
+
+func getType(event Event) string {
+	switch event.(type) {
+	case AddCommitEvent:
+		return "AddCommitEvent"
+	case StartMonitorEvent:
+		return "StartMonitorEvent"
+	default:
+		return "Unknown"
+	}
 }

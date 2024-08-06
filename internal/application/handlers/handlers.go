@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"reflect"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -35,8 +34,15 @@ func NewAppHandler(repo ports.Repository, cmt ports.Commit, gh ports.GithubServi
 
 func (h *AppHandler) SetupEventBus() {
 	eventBus := events.NewEventBus()
-	eventBus.Register(reflect.TypeOf(events.AddCommitEvent{}), h.HandleAddCommitEvent)
-	eventBus.Register(reflect.TypeOf(events.StartMonitorEvent{}), h.HandleStartMonitoringEvent)
+
+	eventBus.Register("AddCommitEvent", func(event events.Event) {
+		e := event.(events.AddCommitEvent)
+		h.HandleAddCommitEvent(e)
+	})
+	eventBus.Register("StartMonitorEvent", func(event events.Event) {
+		e := event.(events.StartMonitorEvent)
+		h.HandleStartMonitoringEvent(e)
+	})
 	h.EventBus = eventBus
 }
 
