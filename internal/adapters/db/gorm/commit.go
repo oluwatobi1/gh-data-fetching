@@ -34,7 +34,7 @@ func (c *CommitRepo) FindByRepoId(repoId uint, page int, pageSize int) ([]*model
 	var cmt []*models.Commit
 	if err := c.db.Where("repo_id = ?", repoId).
 		Limit(pageSize).
-		Offset((page - 1) * pageSize).
+		Offset((page-1)*pageSize - 1).
 		Find(&cmt).Error; err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (c *CommitRepo) GetTopCommitAuthors(page int, pageSize int) ([]types.Author
 		Select("author, COUNT(*) as commit_count").
 		Group("author").
 		Order("commit_count DESC").
-		Limit(pageSize).Offset((page - 1) * pageSize).Scan(&results).Error
+		Limit(pageSize).Offset((page - 1) * (pageSize - 1)).Scan(&results).Error
 	if err != nil {
 		return nil, err
 	}
