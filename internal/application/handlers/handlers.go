@@ -33,7 +33,7 @@ func NewAppHandler(repo ports.Repository, cmt ports.Commit, gh ports.GithubServi
 }
 
 func (h *AppHandler) SetupEventBus() {
-	eventBus := events.NewEventBus()
+	eventBus := events.NewEventBus(5)
 
 	eventBus.Register("AddCommitEvent", func(event events.Event) {
 		e := event.(events.AddCommitEvent)

@@ -2,7 +2,9 @@ package events
 
 import "github.com/oluwatobi1/gh-api-data-fetch/internal/core/domain/models"
 
-type Event interface{}
+type Event interface {
+	EventType() string
+}
 
 type AddCommitEvent struct {
 	Repo   *models.Repository
