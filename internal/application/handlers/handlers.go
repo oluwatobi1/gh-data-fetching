@@ -113,11 +113,13 @@ func (h *AppHandler) UpdateAllCommits() error {
 }
 
 func (h *AppHandler) CommitManager(repo *models.Repository, config models.CommitConfig) error {
+
 	for {
-		commits, lastCommitSHA, err := h.GithubService.FetchCommits(repo.FullName, repo.ID, config)
+		commits, lastCommitSHA, rateLimitDuration, err := h.GithubService.FetchCommits(repo.FullName, repo.ID, config)
 		if err != nil {
 			return err
 		}
+
 		if len(commits) == 0 {
 			break
 		}
@@ -136,6 +138,9 @@ func (h *AppHandler) CommitManager(repo *models.Repository, config models.Commit
 		config.Sha = lastCommitSHA
 		if count, err := h.CommitRepo.Count(); err == nil {
 			h.logger.Sugar().Info("Total Commit in Database  ", count)
+		}
+		if rateLimitDuration > 1 {
+			time.Sleep(time.Duration(rateLimitDuration))
 		}
 	}
 	return nil

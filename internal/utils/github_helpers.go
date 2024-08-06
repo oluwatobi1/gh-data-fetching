@@ -31,10 +31,11 @@ func BuildGHCommitURL(repoName string, config models.CommitConfig) string {
 	return url
 }
 
-func FetchBatch(url, token string) ([]models.CommitResponse, string, error) {
+func FetchBatch(url, token string) ([]models.CommitResponse, string, int, error) {
+	var rL int
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, "", err
+		return nil, "", rL, err
 	}
 	if token != "" {
 		req.Header.Set(authHeader, "Bearer "+token)
@@ -42,30 +43,31 @@ func FetchBatch(url, token string) ([]models.CommitResponse, string, error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, "", err
+		return nil, "", rL, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == tooManyRequests {
-		if err := HandleRateLimit(resp); err != nil {
-			return nil, "", err
+		rateLimit, err := HandleRateLimit(resp)
+		if err != nil {
+			return nil, "", rateLimit, err
 		}
-		return nil, "", fmt.Errorf(rateLimitErrorMsg)
+		return nil, "", rL, fmt.Errorf(rateLimitErrorMsg)
 	}
 
 	if resp.StatusCode != successStatus {
 		bodyBytes, _ := ioutil.ReadAll(resp.Body)
-		return nil, "", fmt.Errorf("failed to fetch commits: %s", string(bodyBytes))
+		return nil, "", rL, fmt.Errorf("failed to fetch commits: %s", string(bodyBytes))
 	}
 
 	var commits []models.CommitResponse
 	if err := json.NewDecoder(resp.Body).Decode(&commits); err != nil {
-		return nil, "", err
+		return nil, "", rL, err
 	}
 
 	linkHeader := resp.Header.Get("Link")
 	links := ParseLinkHeader(linkHeader)
 	nextURL := links["next"]
 
-	return commits, nextURL, nil
+	return commits, nextURL, rL, nil
 }

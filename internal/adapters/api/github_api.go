@@ -55,23 +55,29 @@ func (gh *GitHubAPI) FetchRepository(repoName string) (*models.Repository, error
 	return &repo, nil
 }
 
-func (gh *GitHubAPI) FetchCommits(repoName string, repoId uint, config models.CommitConfig) ([]models.Commit, string, error) {
+func (gh *GitHubAPI) FetchCommits(repoName string, repoId uint, config models.CommitConfig) ([]models.Commit, string, int, error) {
 	var allCommits []models.CommitResponse
 	var errL error
+	var rateLimitDuration int
 	url := utils.BuildGHCommitURL(repoName, config)
 
 	gh.logger.Sugar().Info("Fetching Commit in Batches...")
 	for len(allCommits) < 1000 {
-		commits, nextURL, err := utils.FetchBatch(url, gh.token)
+		commits, nextURL, rL, err := utils.FetchBatch(url, gh.token)
 		if err != nil {
 			errL = err
 			break
 		}
+
 		if config.Sha != "" && len(commits) > 0 {
 			// remove already fetch hash from hash
 			commits = commits[1:]
 		}
 		allCommits = append(allCommits, commits...)
+		if rL != 0 {
+			rateLimitDuration = rL
+			break
+		}
 		if len(commits) == 0 || nextURL == "" {
 			break
 		}
@@ -88,5 +94,5 @@ func (gh *GitHubAPI) FetchCommits(repoName string, repoId uint, config models.Co
 		lastCommitSHA = allCommits[len(allCommits)-1].SHA
 	}
 
-	return commitsMd, lastCommitSHA, errL
+	return commitsMd, lastCommitSHA, rateLimitDuration, errL
 }

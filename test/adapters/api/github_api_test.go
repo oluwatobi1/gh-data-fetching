@@ -38,7 +38,8 @@ func TestFetchCommits(t *testing.T) {
 	}
 
 	repoName := "chromium/chromium"
-	commits, _, err := githubApi.FetchCommits(repoName, 1, config)
+	commits, _, rl, err := githubApi.FetchCommits(repoName, 1, config)
 	assert.NoError(t, err)
 	assert.NotNil(t, commits)
+	assert.Equal(t, 0, rl)
 }

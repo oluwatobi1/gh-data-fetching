@@ -25,5 +25,5 @@ type Repository interface {
 
 type GithubService interface {
 	FetchRepository(repoName string) (*models.Repository, error)
-	FetchCommits(repoName string, repoID uint, config models.CommitConfig) ([]models.Commit, string, error)
+	FetchCommits(repoName string, repoID uint, config models.CommitConfig) ([]models.Commit, string, int, error)
 }

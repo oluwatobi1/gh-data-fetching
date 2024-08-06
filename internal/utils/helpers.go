@@ -27,15 +27,16 @@ func InfoResponse(ctx *gin.Context, message string, data interface{}, statusCode
 }
 
 // HandleRateLimit handles GitHub rate limiting by waiting until the rate limit resets
-func HandleRateLimit(resp *http.Response) error {
+func HandleRateLimit(resp *http.Response) (int, error) {
+	var waitDuration int
 	retryAfter := resp.Header.Get("Retry-After")
 	if retryAfter != "" {
 		retrySeconds, err := strconv.Atoi(retryAfter)
 		if err != nil {
-			return err
+			return waitDuration, err
 		}
-		time.Sleep(time.Duration(retrySeconds) * time.Second)
-		return nil
+		waitDuration = int(time.Duration(retrySeconds) * time.Second)
+		return waitDuration, nil
 	}
 
 	rateLimitRemaining := resp.Header.Get("X-RateLimit-Remaining")
@@ -43,14 +44,12 @@ func HandleRateLimit(resp *http.Response) error {
 		rateLimitReset := resp.Header.Get("X-RateLimit-Reset")
 		resetTime, err := strconv.ParseInt(rateLimitReset, 10, 64)
 		if err != nil {
-			return err
+			return waitDuration, err
 		}
 		waitDuration := time.Until(time.Unix(resetTime, 0))
-		time.Sleep(waitDuration)
-		return nil
+		return int(waitDuration), nil
 	}
-
-	return errors.New("unknown rate limit issue")
+	return waitDuration, errors.New("unknown rate limit issue")
 }
 
 // ParseLinkHeader parses the GitHub link header for pagination
