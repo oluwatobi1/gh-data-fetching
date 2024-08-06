@@ -89,6 +89,10 @@ func (h *AppHandler) InitNewRepository(repoName string) (bool, error) {
 }
 
 func (h *AppHandler) UpdateAllCommits() error {
+	err := utils.ValidateDates(config.Env.START_DATE, config.Env.END_DATE)
+	if err != nil {
+		return err
+	}
 	repos, err := h.RepositoryRepo.FindAll()
 	if err != nil {
 		return err

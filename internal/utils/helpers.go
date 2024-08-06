@@ -93,3 +93,31 @@ func ParsePaginationParams(pageStr, pageSizeStr string) (*types.Pagination, erro
 	}, err
 
 }
+
+func ValidateDates(startDate, endDate string) error {
+	const layout = "2006-01-02"
+
+	if (startDate == "" && endDate != "") || (startDate != "" && endDate == "") {
+		return fmt.Errorf("both start_date and end_date must be provided together")
+	}
+
+	if startDate == "" || endDate == "" {
+		return nil
+	}
+
+	start, err := time.Parse(layout, startDate)
+	if err != nil {
+		return fmt.Errorf("invalid start date format: %v", err)
+	}
+
+	end, err := time.Parse(layout, endDate)
+	if err != nil {
+		return fmt.Errorf("invalid end date format: %v", err)
+	}
+
+	if start.After(end) {
+		return errors.New("start date must be before end date")
+	}
+
+	return nil
+}
