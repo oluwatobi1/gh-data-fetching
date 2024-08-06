@@ -11,9 +11,9 @@ type Commit interface {
 	FindByRepoId(repoId uint, page int, pageSize int) ([]*models.Commit, error)
 	FindAll() ([]*models.Commit, error)
 	CreateMany(commits []models.Commit) error
-	FindAny(hashes []string) ([]*models.Commit, error)
 	Count() (int64, error)
 	GetTopCommitAuthors(page int, pageSize int) ([]types.AuthorCommitsCount, error)
+	UpsertCommits(commits []models.Commit) error
 }
 
 type Repository interface {

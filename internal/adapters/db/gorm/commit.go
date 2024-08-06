@@ -49,17 +49,13 @@ func (r *CommitRepo) FindAll() ([]*models.Commit, error) {
 	return cmt, nil
 }
 
-// FindAny retrieves commits by a list of hashes. It returns all commits found in the database.
-func (c *CommitRepo) FindAny(hashes []string) ([]*models.Commit, error) {
-	var commits []*models.Commit
-	if len(hashes) == 0 {
-		return commits, nil
+func (c *CommitRepo) UpsertCommits(commits []models.Commit) error {
+	for _, commit := range commits {
+		if err := c.db.Save(&commit).Error; err != nil {
+			return err
+		}
 	}
-
-	if err := c.db.Where("hash IN ?", hashes).Find(&commits).Error; err != nil {
-		return nil, err
-	}
-	return commits, nil
+	return nil
 }
 
 // Count returns the total number of commits in the database: for logging purpose

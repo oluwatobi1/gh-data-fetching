@@ -188,37 +188,10 @@ func (h *AppHandler) HandleStartMonitoringEvent(event events.StartMonitorEvent) 
 }
 
 func (h *AppHandler) insertCommitBatch(batch []models.Commit) error {
-	var hashes []string
-	for _, commit := range batch {
-		hashes = append(hashes, commit.Hash)
-	}
-
-	// Find existing commits by hash
-	existingCommits, err := h.CommitRepo.FindAny(hashes)
-	if err != nil {
+	h.logger.Sugar().Info("Upserting commit")
+	if err := h.CommitRepo.UpsertCommits(batch); err != nil {
+		h.logger.Sugar().Error("Upsert Error", err)
 		return err
 	}
-	// Create a map of existing commit hashes for quick lookup
-	existingHashMap := make(map[string]struct{}, len(existingCommits))
-	for _, commit := range existingCommits {
-		existingHashMap[commit.Hash] = struct{}{}
-	}
-
-	// Filter out commits that already exist in the database
-	var newCommits []models.Commit
-	for _, commit := range batch {
-		if _, exists := existingHashMap[commit.Hash]; !exists {
-			newCommits = append(newCommits, commit)
-		}
-	}
-
-	// Insert only new commits
-	if len(newCommits) > 0 {
-		if err := h.CommitRepo.CreateMany(newCommits); err != nil {
-			h.logger.Sugar().Info("Create Error", err)
-			return err
-		}
-	}
-
 	return nil
 }
