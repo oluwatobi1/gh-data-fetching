@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/oluwatobi1/gh-api-data-fetch/internal/core/domain/models"
@@ -61,80 +60,35 @@ func (gh *GitHubAPI) FetchRepository(repoName string) (*models.Repository, error
 func (gh *GitHubAPI) FetchCommits(repoName string, repoId uint, config models.CommitConfig) ([]models.Commit, string, error) {
 	var allCommits []models.CommitResponse
 	var errL error
-	url := fmt.Sprintf("https://api.github.com/repos/%s/commits?per_page=100", repoName)
+	url := utils.BuildGHCommitURL(repoName, config)
 
-	if config.StartDate != "" {
-		url += fmt.Sprintf("&since=%s", config.StartDate)
-	}
-	if config.EndDate != "" {
-		url += fmt.Sprintf("&until=%s", config.EndDate)
-	}
-	if config.Sha != "" {
-		url += fmt.Sprintf("&sha=%s", config.Sha)
-	}
 	gh.logger.Sugar().Info("Fetching Commit in Batches...")
 	for len(allCommits) < 1000 {
-		var commits []models.CommitResponse
-		req, err := http.NewRequest("GET", url, nil)
+		commits, nextURL, err := utils.FetchBatch(url, gh.token)
 		if err != nil {
 			errL = err
 			break
 		}
-		req.Header.Set("Authorization", "Bearer "+gh.token)
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			errL = err
-			break
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode == http.StatusTooManyRequests {
-			if err := utils.HandleRateLimit(resp); err != nil {
-				errL = err
-				break
-			}
-			continue
-		}
-		if resp.StatusCode != http.StatusOK {
-
-			bodyBytes, _ := ioutil.ReadAll(resp.Body)
-			return nil, "", fmt.Errorf("failed to fetch commits: %s", string(bodyBytes))
-		}
-		if err := json.NewDecoder(resp.Body).Decode(&commits); err != nil {
-			errL = err
-			break
-		}
-		if config.Sha != "" {
+		if config.Sha != "" && len(commits) > 0 {
 			// remove already fetch hash from hash
-			if len(commits) > 0 {
-				commits = commits[1:]
-			}
+			commits = commits[1:]
 		}
-
 		allCommits = append(allCommits, commits...)
-
-		if len(commits) == 0 {
-			break
-		}
-
-		linkHeader := resp.Header.Get("Link")
-		links := utils.ParseLinkHeader(linkHeader)
-		nextURL, hasNext := links["next"]
-		if !hasNext {
+		if len(commits) == 0 || nextURL == "" {
 			break
 		}
 		url = nextURL
 	}
-	var commits []models.Commit
+	var commitsMd []models.Commit
 	for _, cmt := range allCommits {
-		commits = append(commits, cmt.ToCommit(repoId))
+		commitsMd = append(commitsMd, cmt.ToCommit(repoId))
 	}
-	gh.logger.Sugar().Info("Total Commits in Current Batch: ", len(commits))
+	gh.logger.Sugar().Info("Total Commits in Current Batch: ", len(commitsMd))
 
 	lastCommitSHA := ""
 	if len(allCommits) > 0 {
 		lastCommitSHA = allCommits[len(allCommits)-1].SHA
 	}
 
-	return commits, lastCommitSHA, errL
+	return commitsMd, lastCommitSHA, errL
 }
