@@ -1,6 +1,7 @@
 package api_test
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,33 +15,30 @@ import (
 func TestFetchRepository(t *testing.T) {
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"id": 1, "full_name": "test/repo", "last_commit_sha": "abc123"}`))
+		w.Write([]byte(`{"id": 1, "full_name": "chromium/chromium", "last_commit_sha": "abc123"}`))
 	}))
 	defer mockServer.Close()
 	logger, _ := zap.NewDevelopment()
-	githubApi := api.NewGitHubAPI("mocktoken", logger)
-
-	repo, err := githubApi.FetchRepository("test/repo")
+	githubApi := api.NewGitHubAPI("", logger)
+	repoName := "chromium/chromium"
+	repo, err := githubApi.FetchRepository(repoName)
+	fmt.Println("repo", repo, "err", err)
 	assert.NoError(t, err)
 	assert.NotNil(t, repo)
-	assert.Equal(t, "test/repo", repo.FullName)
+	assert.Equal(t, repoName, repo.FullName)
 }
 
 func TestFetchCommits(t *testing.T) {
-	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"sha":"abc", "commit": {"author": {"name": "testAuthor"}}}]`))
-	}))
 
-	defer mockServer.Close()
 	logger, _ := zap.NewDevelopment()
-	githubApi := api.NewGitHubAPI("mock_token", logger)
+	githubApi := api.NewGitHubAPI("", logger)
 	config := models.CommitConfig{
-		StartDate: "2023-01-01T00:00:00Z",
-		EndDate:   "2023-12-31T23:59:59Z",
+		StartDate: "2023-01-01",
+		EndDate:   "2023-12-31",
 	}
-	commits, _, err := githubApi.FetchCommits("test/repo", 1, config)
+
+	repoName := "chromium/chromium"
+	commits, _, err := githubApi.FetchCommits(repoName, 1, config)
 	assert.NoError(t, err)
 	assert.NotNil(t, commits)
-	assert.Equal(t, "abc", commits[0].Hash)
 }

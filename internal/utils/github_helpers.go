@@ -36,7 +36,9 @@ func FetchBatch(url, token string) ([]models.CommitResponse, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-	req.Header.Set(authHeader, "Bearer "+token)
+	if token != "" {
+		req.Header.Set(authHeader, "Bearer "+token)
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

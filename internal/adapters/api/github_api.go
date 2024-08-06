@@ -24,7 +24,9 @@ func NewGitHubAPI(token string, logger *zap.Logger) ports.GithubService {
 func (gh *GitHubAPI) FetchRepository(repoName string) (*models.Repository, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s", repoName)
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("Authorization", "Bearer "+gh.token)
+	if gh.token != "" {
+		req.Header.Set("Authorization", "Bearer "+gh.token)
+	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		gh.logger.Sugar().Warn("FetchRepository Error, " + err.Error())
